@@ -11,10 +11,13 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # --------------------- CLASES DE LOS FRAMES DE LA APP
 
 # --------------------- Frame de Home
+
+
 class FrameHome(tk.Frame):
     def __init__(self, root=None):
-        super().__init__(root, width=480, height=320)
+        super().__init__(root)
         self.root = root
+        self.config(background='#d3d9e9')
         self.pack()
         # Variables del Frame Home
         self.texto = ""
@@ -22,23 +25,31 @@ class FrameHome(tk.Frame):
         # Llamada a componentes
         self.textInput()
         self.buttonCreateSplin()
-        self.buttonCreatePair() 
-        
-    #-------------------- Funciones de Componentes   
+        self.buttonCreatePair()
+
+        # Configuración de la distribución de columnas
+        self.grid_columnconfigure(0, weight=1)
+
+    # -------------------- Funciones de Componentes
     def textInput(self):
         self.text_box = tk.Entry(self)
-        self.text_box.config(validate="key", validatecommand=(self.register(lambda char: char.isdigit() or char == '-'), '%S'))
-        self.text_box.config(validatecommand=(self.register(self.validar_text_box), '%P'))
-        self.text_box.pack()
-        
+        self.text_box.config(validate="key", validatecommand=(
+            self.register(lambda char: char.isdigit() or char == '-'), '%S'))
+        self.text_box.config(validatecommand=(
+            self.register(self.validar_text_box), '%P'))
+        self.text_box.config(width=35, font='Consolas', justify='center')
+        self.text_box.grid(row=0, column=0, pady=(15, 15))
+
     def buttonCreateSplin(self):
-        self.boton = tk.Button(self, text="Ejecutar", command=self.plot_grafica, state="disabled")
-        self.boton.pack()
-    
+        self.boton = tk.Button(self, text="Ejecutar", command=self.plot_grafica,
+                               state="disabled", bg="#a6a9c8", fg="#31293f", relief="raised", activebackground="#796ea8", font="Consolas")
+        self.boton.grid(row=1, column=0, sticky='w', padx=(350, 0))
+
     def buttonCreatePair(self):
-        self.boton_plot = tk.Button(self, text="Copiar Pares", command=self.copiar_pares, state="disabled")
-        self.boton_plot.pack()
-        
+        self.boton_plot = tk.Button(self, text="Copiar Pares", command=self.copiar_pares,
+                                    state="disabled", bg="#a6a9c8", fg="#31293f", relief="raised", activebackground="#796ea8", font="Consolas")
+        self.boton_plot.grid(row=1, column=0, sticky='e', padx=(0, 350))
+
     def plot_grafica(self):
         valor = int(self.text_box.get())
         lista = []
@@ -50,7 +61,7 @@ class FrameHome(tk.Frame):
         x = rand.sample(lista, valor)
         y = rand.sample(lista, valor)
         x.sort()
-        
+
         self.texto = ""
         for i in range(len(x)):
             self.texto += str(x[i]) + " " + str(y[i]) + "\n"
@@ -59,7 +70,7 @@ class FrameHome(tk.Frame):
         y_new = f(x_new)
 
         # Creamos una figura de Matplotlib
-        fig = plt.figure(figsize=(10, 8))
+        fig = plt.figure(figsize=(10, 8), facecolor="#d3d9e9")
         ax = fig.add_subplot(111)
 
         # Graficamos los datos en la figura
@@ -78,12 +89,12 @@ class FrameHome(tk.Frame):
         # Creamos el widget de FigureCanvasTkAgg
         self.canvas = FigureCanvasTkAgg(fig, master=self)
         self.canvas.draw()
-        self.canvas.get_tk_widget().pack()
-         # Habilitamos el botón de plotear gráfica
+        self.canvas.get_tk_widget().grid(row=2, column=0, pady=(15, 0))
+        # Habilitamos el botón de plotear gráfica
         self.boton_plot.config(state="normal")
 
     # -------------------- Funciones de interactividad
-    def validar_text_box(self,valor):
+    def validar_text_box(self, valor):
         if valor.isdigit():
             valor = int(valor)
             if valor >= 8 and valor <= 12:
@@ -93,16 +104,17 @@ class FrameHome(tk.Frame):
         else:
             self.boton.config(state="disabled")
         return True
-    
+
     def copiar_pares(self):
         copy(self.texto)
         self.showMessagePair()
-    
+
     def showMessagePair(self):
         mensaje = tk.Toplevel(self)
-        mensaje.geometry(str(self.center_MessagePair(210,50)))
+        mensaje.geometry(str(self.center_MessagePair(210, 50)))
         mensaje.overrideredirect(True)
-        mensaje_label = tk.Label(mensaje, text="Texto copiado en el portapapeles")
+        mensaje_label = tk.Label(
+            mensaje, text="Texto copiado en el portapapeles")
         mensaje_label.pack(padx=10, pady=10)
         mensaje.after(1500, mensaje.destroy)
 
@@ -112,13 +124,71 @@ class FrameHome(tk.Frame):
         x = (screen_width - width) // 2
         y = (screen_height - height) // 2
         return '{}x{}+{}+{}'.format(width, height, x, y)
+
 # ---------------------------  Frame de los Creditos
+
+
 class FrameCredits(tk.Frame):
     def __init__(self, root=None):
-        super().__init__(root, width=480, height=320)
+        super().__init__(root)
         self.root = root
         self.pack()
-        self.config(bg="blue")
+        self.show_members()
+
+    def show_members(self):
+        # Limpiar el frame antes de agregar nueva información
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        # Lista de participantes con su nombre e información
+        participants = [
+            {
+                "nombre": "Ballon Villar, Diego Eduardo",
+                "informacion": "U201520327"
+            },
+            {
+                "nombre": "Goñas Lopez, Franck Manuel",
+                "informacion": "U201421134"
+            },
+            {
+                "nombre": "Pilco Chiuyare, André Dario",
+                "informacion": "U202110764"
+            },
+            {
+                "nombre": "Poma Astete, Luis Felipe",
+                "informacion": "U202110902"
+            },
+            {
+                "nombre": "Sovero Cubillas, John Davids",
+                "informacion": "U202115065"
+            }
+        ]
+
+        # Estilos
+        frame_bg_color = "#d3d9e9"  # Color de fondo del frame
+        card_bg_color = "#554D74"  # Color de fondo de las tarjetas
+        nombre_font = ("Consolas", 14, "bold")  # Fuente del nombre
+        informacion_font = ("Consolas", 12)  # Fuente de la información
+        padding_y = 10  # Relleno vertical
+        border_width = 2  # Ancho del borde de las tarjetas
+
+        # Configurar el frame
+        self.config(bg=frame_bg_color)
+
+        # Mostrar la información de cada participante en tarjetas transparentes
+        for participant in participants:
+            card_frame = tk.Frame(self, bg=frame_bg_color, bd=border_width)
+            card_frame.pack(pady=(padding_y, 10), expand=True)
+
+            nombre_label = tk.Label(card_frame, text=participant["nombre"], font=nombre_font,
+                                    foreground="white", bg=card_bg_color, width=40, height=2, cursor="dot", relief="sunken")
+            nombre_label.pack(pady=(padding_y // 2, 0))
+
+            informacion_label = tk.Label(card_frame, text=participant["informacion"], font=informacion_font,
+                                         foreground="light gray", bg=card_bg_color, width=40, height=2, cursor="dot", relief="sunken")
+            informacion_label.pack(
+                pady=(0, padding_y // 2), fill="x")
+
 
 # ----------------------- CLASE DE LA APP
 class App(tk.Tk):
@@ -126,23 +196,23 @@ class App(tk.Tk):
         super().__init__()
 
         # Crear la ventana principal
-        self.title("Splines Cubicos")
+        self.title("Splines Cúbicos")
         self.barra_menu()
         # Crear los marcos para cada pantalla
-        self.home_frame = FrameHome(self)
-        self.credits_frame = FrameCredits(self)
+        self.programFrame = FrameHome(self)
+        self.creditsFrame = FrameCredits(self)
 
         # Posicionamiento de la ventana
-        self.overrideredirect(True)
-        self.center_window(width,height)
+        self.overrideredirect(False)
+        self.center_window(width, height)
         # Mostrar la pantalla de inicio
         self.show_home()
-        
+
         # Registrar función de controlador de evento para cerrar la ventana
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        
+
     # ------------ Funciones para la Ventana
-    
+
     def center_window(self, width, height):
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
@@ -152,18 +222,21 @@ class App(tk.Tk):
 
     def barra_menu(self):
         barra_menu = tk.Menu(self)
+
+        # Configuración de la barra de menú
         self.config(menu=barra_menu, width=300, height=300)
 
+        # Configuración de cada elemento del menú
         barra_menu.add_cascade(label='Inicio', command=self.show_home)
-        barra_menu.add_cascade(label='Creditos', command=self.show_credits)
-        barra_menu.add_cascade(label='Salir', command=self.destroy)
+        barra_menu.add_cascade(label='Créditos', command=self.show_credits)
+        barra_menu.add_cascade(label='Salir', command=self.quit)
 
     def show_home(self):
         # Ocultar los otros marcos y mostrar la pantalla de inicio
-        self.credits_frame.pack_forget()
-        self.home_frame.pack(fill=tk.BOTH, expand=1)
+        self.programFrame.pack(fill=tk.BOTH, expand=1)
+        self.creditsFrame.pack_forget()
 
     def show_credits(self):
         # Ocultar los otros marcos y mostrar la pantalla de resultados
-        self.home_frame.pack_forget()
-        self.credits_frame.pack(fill=tk.BOTH, expand=1)
+        self.programFrame.pack_forget()
+        self.creditsFrame.pack(fill=tk.BOTH, expand=1)
