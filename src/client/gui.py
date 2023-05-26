@@ -7,48 +7,58 @@ import random as rand
 from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from PIL import ImageTk, Image
+
+
+import customtkinter as ctk
+ctk.set_default_color_theme('dark-blue')
 
 # --------------------- CLASES DE LOS FRAMES DE LA APP
 
 # --------------------- Frame de Home
 
 
-class FrameHome(tk.Frame):
+class FrameHome(ctk.CTkFrame):
     def __init__(self, root=None):
         super().__init__(root)
         self.root = root
-        self.config(background='#d3d9e9')
-        self.pack()
+        self.pack(fill="both", expand=True)
         # Variables del Frame Home
         self.texto = ""
         self.canvas = None
+        self.lienzo = None
         # Llamada a componentes
         self.textInput()
         self.buttonCreateSplin()
         self.buttonCreatePair()
-
         # Configuración de la distribución de columnas
         self.grid_columnconfigure(0, weight=1)
 
     # -------------------- Funciones de Componentes
     def textInput(self):
-        self.text_box = tk.Entry(self)
-        self.text_box.config(validate="key", validatecommand=(
+        self.texto = ctk.CTkLabel(
+            master=self, text="Numero de pares ordenados (8-12)", font=('Consolas', 18))
+        self.texto.pack(pady=10, padx=10)
+
+        self.text_box = ctk.CTkEntry(
+            master=self, placeholder_text="Ingrese el número de pares", font=('Consolas', 18), width=350, justify="center")
+
+        self.text_box.configure(validate="key", validatecommand=(
             self.register(lambda char: char.isdigit() or char == '-'), '%S'))
-        self.text_box.config(validatecommand=(
+        self.text_box.configure(validatecommand=(
             self.register(self.validar_text_box), '%P'))
-        self.text_box.config(width=35, font='Consolas', justify='center')
-        self.text_box.grid(row=0, column=0, pady=(15, 15))
+        self.text_box.pack(pady=10, padx=10)
 
     def buttonCreateSplin(self):
-        self.boton = tk.Button(self, text="Ejecutar", command=self.plot_grafica,
-                               state="disabled", bg="#a6a9c8", fg="#31293f", relief="raised", activebackground="#796ea8", font="Consolas")
-        self.boton.grid(row=1, column=0, sticky='w', padx=(350, 0))
+        self.boton = ctk.CTkButton(self, text="Ejecutar", command=self.plot_grafica,
+                                   state="disabled", font=("Consolas", 24))
+        self.boton.pack(pady=10, padx=10)
 
     def buttonCreatePair(self):
-        self.boton_plot = tk.Button(self, text="Copiar Pares", command=self.copiar_pares,
-                                    state="disabled", bg="#a6a9c8", fg="#31293f", relief="raised", activebackground="#796ea8", font="Consolas")
-        self.boton_plot.grid(row=1, column=0, sticky='e', padx=(0, 350))
+        self.boton_plot = ctk.CTkButton(self, text="Copiar Pares", command=self.copiar_pares,
+                                        state="disabled", font=("Consolas", 24))
+        self.boton_plot.pack(pady=10, padx=10)
 
     def plot_grafica(self):
         valor = int(self.text_box.get())
@@ -70,39 +80,56 @@ class FrameHome(tk.Frame):
         y_new = f(x_new)
 
         # Creamos una figura de Matplotlib
-        fig = plt.figure(figsize=(10, 8), facecolor="#d3d9e9")
+        fig = plt.figure(figsize=(7, 6))
         ax = fig.add_subplot(111)
 
         # Graficamos los datos en la figura
-        ax.plot(x_new, y_new, 'b')
-        ax.plot(x, y, 'ro')
+        ax.plot(x_new, y_new, 'b', label='Interpolación')
+        ax.plot(x, y, 'ro', label='Puntos')
         for xy in zip(x, y):
             ax.annotate('(%.2f, %.2f)' % xy, xy=xy)
-        ax.set_title('Interpolación con Splines Cúbicos')
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.grid(True)
-
+        ax.set_xlabel('x', fontsize=12)
+        ax.set_ylabel('y', fontsize=12)
+        ax.set_title('Interpolación con Splines Cúbicos', fontsize=14)
+        ax.grid(True, linestyle='--', linewidth=0.9, alpha=0.5)
+        ax.legend()
+        
+        # Ajustar los márgenes del gráfico
+        plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
+        
         # Verificamos si hay un canvas
-        if self.canvas:
-            self.canvas.get_tk_widget().destroy()
-        # Creamos el widget de FigureCanvasTkAgg
-        self.canvas = FigureCanvasTkAgg(fig, master=self)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().grid(row=2, column=0, pady=(15, 0))
+        if self.lienzo:
+            self.lienzo.destroy()
+
+        # Creamos un nuevo lienzo
+        self.lienzo = ctk.CTkCanvas(self)
+        self.lienzo.pack()
+        # Convertir el gráfico en una imagen
+        canvas_agg = fig.canvas
+        canvas_agg.draw()
+        buffer = canvas_agg.buffer_rgba()
+        image = Image.frombytes('RGBA', canvas_agg.get_width_height(), buffer.tobytes())
+        
+         # Ajustar el tamaño del lienzo al tamaño del gráfico
+        self.lienzo.configure(width=image.width, height=image.height)
+        
+        # Mostrar la imagen del gráfico en el lienzo
+        self.plot_image = ImageTk.PhotoImage(image)
+        self.lienzo.create_image(0, 0, anchor="nw", image=self.plot_image)
+           
         # Habilitamos el botón de plotear gráfica
-        self.boton_plot.config(state="normal")
+        self.boton_plot.configure(state="normal")
 
     # -------------------- Funciones de interactividad
     def validar_text_box(self, valor):
         if valor.isdigit():
             valor = int(valor)
             if valor >= 8 and valor <= 12:
-                self.boton.config(state="normal")
+                self.boton.configure(state="normal")
             else:
-                self.boton.config(state="disabled")
+                self.boton.configure(state="disabled")
         else:
-            self.boton.config(state="disabled")
+            self.boton.configure(state="disabled")
         return True
 
     def copiar_pares(self):
@@ -128,7 +155,7 @@ class FrameHome(tk.Frame):
 # ---------------------------  Frame de los Creditos
 
 
-class FrameCredits(tk.Frame):
+class FrameCredits(ctk.CTkFrame):
     def __init__(self, root=None):
         super().__init__(root)
         self.root = root
@@ -177,15 +204,15 @@ class FrameCredits(tk.Frame):
 
         # Mostrar la información de cada participante en tarjetas transparentes
         for participant in participants:
-            card_frame = tk.Frame(self, bg=frame_bg_color, bd=border_width)
+            card_frame = ctk.Frame(self, bg=frame_bg_color, bd=border_width)
             card_frame.pack(pady=(padding_y, 10), expand=True)
 
-            nombre_label = tk.Label(card_frame, text=participant["nombre"], font=nombre_font,
-                                    foreground="white", bg=card_bg_color, width=40, height=2, cursor="dot", relief="sunken")
+            nombre_label = ctk.Label(card_frame, text=participant["nombre"], font=nombre_font,
+                                     foreground="white", bg=card_bg_color, width=40, height=2, cursor="dot", relief="sunken")
             nombre_label.pack(pady=(padding_y // 2, 0))
 
-            informacion_label = tk.Label(card_frame, text=participant["informacion"], font=informacion_font,
-                                         foreground="light gray", bg=card_bg_color, width=40, height=2, cursor="dot", relief="sunken")
+            informacion_label = ctk.Label(card_frame, text=participant["informacion"], font=informacion_font,
+                                          foreground="light gray", bg=card_bg_color, width=40, height=2, cursor="dot", relief="sunken")
             informacion_label.pack(
                 pady=(0, padding_y // 2), fill="x")
 
@@ -200,13 +227,12 @@ class App(tk.Tk):
         self.barra_menu()
         # Crear los marcos para cada pantalla
         self.programFrame = FrameHome(self)
-        self.creditsFrame = FrameCredits(self)
+        # self.creditsFrame = FrameCredits(self)
 
         # Posicionamiento de la ventana
-        self.overrideredirect(False)
         self.center_window(width, height)
         # Mostrar la pantalla de inicio
-        self.show_home()
+        # self.show_home()
 
         # Registrar función de controlador de evento para cerrar la ventana
         self.protocol("WM_DELETE_WINDOW", self.quit)
@@ -221,6 +247,7 @@ class App(tk.Tk):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def barra_menu(self):
+
         barra_menu = tk.Menu(self)
 
         # Configuración de la barra de menú
